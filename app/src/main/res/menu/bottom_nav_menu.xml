@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_bluetooth_connection"
+        android:icon="@drawable/ic_bluetooth"
+        android:title="@string/title_connect" />
+
+    <item
+        android:id="@+id/navigation_effects_menu"
+        android:icon="@drawable/ic_effects"
+        android:title="@string/title_effects" />
+
+    <item
+        android:id="@+id/navigation_instruments_menu"
+        android:icon="@drawable/ic_instruments"
+        android:title="@string/title_instruments" />
+
+</menu>

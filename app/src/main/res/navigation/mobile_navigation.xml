@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_bluetooth_connection">
+
+    <fragment
+        android:id="@+id/navigation_bluetooth_connection"
+        android:name="com.example.guitarprocessingapp.ui.effects.EffectsFragment"
+        android:label="@string/title_connect"
+        tools:layout="@layout/fragment_effects" />
+
+    <fragment
+        android:id="@+id/navigation_effects_menu"
+        android:name="com.example.guitarprocessingapp.ui.connection.ConnectionFragment"
+        android:label="@string/title_effects"
+        tools:layout="@layout/fragment_connection" />
+
+    <fragment
+        android:id="@+id/navigation_instruments_menu"
+        android:name="com.example.guitarprocessingapp.ui.instruments.InstrumentsFragment"
+        android:label="@string/title_instruments"
+        tools:layout="@layout/fragment_instruments" />
+</navigation>
