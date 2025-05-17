@@ -7,13 +7,13 @@
 
     <fragment
         android:id="@+id/navigation_bluetooth_connection"
-        android:name="com.example.guitarprocessingapp.ui.effects.EffectsFragment"
+        android:name="com.example.guitarprocessingapp.ui.connection.ConnectionFragment"
         android:label="@string/title_connect"
         tools:layout="@layout/fragment_effects" />
 
     <fragment
         android:id="@+id/navigation_effects_menu"
-        android:name="com.example.guitarprocessingapp.ui.connection.ConnectionFragment"
+        android:name="com.example.guitarprocessingapp.ui.effects.EffectsFragment"
         android:label="@string/title_effects"
         tools:layout="@layout/fragment_connection" />
 

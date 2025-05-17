@@ -11,7 +11,6 @@ import android.view.MenuItem;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.navigation.NavController;
@@ -23,15 +22,11 @@ import com.example.guitarprocessingapp.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final int ENABLE_REQUEST = 1;
-
     private ActivityMainBinding binding;
-    private BluetoothAdapter btAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        init();
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -64,30 +59,5 @@ public class MainActivity extends AppCompatActivity {
         }
         getMenuInflater().inflate(R.menu.connection_menu, menu);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-
-        if (item.getItemId() == R.id.bt_search_button){
-            if (!btAdapter.isEnabled())
-                enableBt();
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-
-
-    //@RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
-    private void enableBt(){
-        Intent turnBtOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            startActivity(turnBtOn);
-        }
-    }
-
-    private void init() {
-        btAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 }

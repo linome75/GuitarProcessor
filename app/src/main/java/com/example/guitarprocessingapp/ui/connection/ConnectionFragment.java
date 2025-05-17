@@ -1,32 +1,110 @@
 package com.example.guitarprocessingapp.ui.connection;
 
+import android.Manifest;
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.example.guitarprocessingapp.databinding.FragmentConnectionBinding;
 
 public class ConnectionFragment extends Fragment {
 
     private FragmentConnectionBinding binding;
+    private ConnectionViewModel viewModel;
+    private DeviceAdapter adapter;
 
-    public View onCreateView(@NonNull LayoutInflater inflater,
-                             ViewGroup container, Bundle savedInstanceState) {
-        ConnectionViewModel connectionViewModel =
-                new ViewModelProvider(this).get(ConnectionViewModel.class);
+    private final ActivityResultLauncher<Intent> bluetoothEnableLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    checkPermissionsAndLoadDevices();
+                } else if (result.getResultCode() == Activity.RESULT_CANCELED) {
+                    // Пользователь отказался включить Bluetooth — закрываем приложение
+                    requireActivity().finish();
+                }
+            });
 
+    private final ActivityResultLauncher<String> permissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    checkBluetoothEnabledAndLoad();
+                } else {
+                    // Если отказали в разрешении, можно тоже закрыть приложение или показать сообщение
+                    requireActivity().finish();
+                }
+            });
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
         binding = FragmentConnectionBinding.inflate(inflater, container, false);
-        View root = binding.getRoot();
+        viewModel = new ViewModelProvider(this).get(ConnectionViewModel.class);
+        return binding.getRoot();
+    }
 
-        final TextView textView = binding.textConnection;
-        connectionViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
-        return root;
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        adapter = new DeviceAdapter();
+        binding.recyclerDevices.setLayoutManager(new LinearLayoutManager(requireContext()));
+        binding.recyclerDevices.setAdapter(adapter);
+
+        adapter.setOnDeviceSelectListener(device ->
+                viewModel.connectToDevice(requireContext(), device)
+        );
+
+        viewModel.getPairedDevices().observe(getViewLifecycleOwner(), devices -> {
+            adapter.setDevices(devices);
+
+            if (devices == null || devices.isEmpty()) {
+                binding.recyclerDevices.setVisibility(View.GONE);
+                binding.textEmpty.setVisibility(View.VISIBLE);
+            } else {
+                binding.recyclerDevices.setVisibility(View.VISIBLE);
+                binding.textEmpty.setVisibility(View.GONE);
+            }
+        });
+
+        viewModel.getSelectedDeviceAddress().observe(getViewLifecycleOwner(), adapter::setSelectedAddress);
+
+        checkPermissionsAndLoadDevices();
+    }
+
+    private void checkPermissionsAndLoadDevices() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT);
+                return;
+            }
+        }
+        checkBluetoothEnabledAndLoad();
+    }
+
+    private void checkBluetoothEnabledAndLoad() {
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) return;
+
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            bluetoothEnableLauncher.launch(enableBtIntent);
+        } else {
+            viewModel.loadPairedDevices(requireContext());
+        }
     }
 
     @Override
