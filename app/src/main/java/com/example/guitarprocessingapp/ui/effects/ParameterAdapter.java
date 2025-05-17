@@ -31,7 +31,7 @@ public class ParameterAdapter extends RecyclerView.Adapter<ParameterAdapter.Para
     @Override
     public void onBindViewHolder(@NonNull ParameterViewHolder holder, int position) {
         EffectParameter param = parameters.get(position);
-        holder.name.setText(param.getName());
+        holder.name.setText(param.getName() + (param.getUnit() == null ? "" : (", " + param.getUnit())));
         holder.value.setText(String.valueOf(param.getCurrentValue()));
         holder.min.setText(String.valueOf(param.getMinValue()));
         holder.max.setText(String.valueOf(param.getMaxValue()));

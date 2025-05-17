@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -15,12 +16,14 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.guitarprocessingapp.R;
 import com.example.guitarprocessingapp.databinding.FragmentConnectionBinding;
 
 public class ConnectionFragment extends Fragment {
@@ -62,6 +65,14 @@ public class ConnectionFragment extends Fragment {
         adapter = new DeviceAdapter();
         binding.recyclerDevices.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.recyclerDevices.setAdapter(adapter);
+
+        // Добавляем разделитель между элементами списка
+        DividerItemDecoration divider = new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL);
+        Drawable dividerDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.recycler_divider);
+        if (dividerDrawable != null) {
+            divider.setDrawable(dividerDrawable);
+        }
+        binding.recyclerDevices.addItemDecoration(divider);
 
         adapter.setOnDeviceSelectListener(device ->
                 viewModel.connectToDevice(requireContext(), device)
