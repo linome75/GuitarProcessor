@@ -6,6 +6,7 @@ import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.guitarprocessingapp.R;
@@ -48,13 +49,18 @@ public class EffectSettingsActivity extends AppCompatActivity {
                     param.getName(),
                     param.getMinValue(),
                     param.getMaxValue(),
-                    param.getCurrentValue()
+                    param.getCurrentValue(),
+                    param.getUnit()
             ));
         }
 
         adapter = new ParameterAdapter(parameterDraft);
         binding.recyclerParams.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerParams.setAdapter(adapter);
+
+        // Добавляем разделители между элементами списка
+//        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+//        binding.recyclerParams.addItemDecoration(divider);
     }
 
     @Override

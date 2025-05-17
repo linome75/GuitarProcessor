@@ -1,6 +1,7 @@
 package com.example.guitarprocessingapp.ui.effects;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,10 +9,13 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.guitarprocessingapp.R;
 import com.example.guitarprocessingapp.databinding.FragmentEffectsBinding;
 
 public class EffectsFragment extends Fragment {
@@ -40,6 +44,14 @@ public class EffectsFragment extends Fragment {
         adapter = new EffectAdapter();
         binding.recyclerEffects.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.recyclerEffects.setAdapter(adapter);
+
+        // Добавляем разделитель между элементами списка
+        DividerItemDecoration divider = new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL);
+        Drawable dividerDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.recycler_divider);
+        if (dividerDrawable != null) {
+            divider.setDrawable(dividerDrawable);
+        }
+        binding.recyclerEffects.addItemDecoration(divider);
 
         adapter.setOnEffectSelectListener(position -> viewModel.selectEffect(position));
 

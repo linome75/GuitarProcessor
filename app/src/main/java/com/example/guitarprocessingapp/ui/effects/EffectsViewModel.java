@@ -27,7 +27,7 @@ public class EffectsViewModel extends ViewModel {
 
         EffectItem overdrive = new EffectItem("Overdrive", false);
         overdrive.setParameters(Arrays.asList(
-                new EffectParameter("Gain", 0, 100, 50),
+                new EffectParameter("Gain", 0, 100, 50, "%"),
                 new EffectParameter("Tone", 0, 10, 5),
                 new EffectParameter("Level", 0, 100, 75)
         ));

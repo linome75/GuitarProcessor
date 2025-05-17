@@ -34,7 +34,7 @@ public class EffectItem {
         this.parameters = new ArrayList<>();
         for (EffectParameter p : newParams) {
             this.parameters.add(new EffectParameter(
-                    p.getName(), p.getMinValue(), p.getMaxValue(), p.getCurrentValue()
+                    p.getName(), p.getMinValue(), p.getMaxValue(), p.getCurrentValue(), p.getUnit()
             ));
         }
     }
