@@ -84,6 +84,8 @@ public class ConnectionFragment extends Fragment {
         checkPermissionsAndLoadDevices();
     }
 
+
+
     private void checkPermissionsAndLoadDevices() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.BLUETOOTH_CONNECT)

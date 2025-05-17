@@ -3,7 +3,6 @@ package com.example.guitarprocessingapp.bluetooth;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.RequiresPermission;

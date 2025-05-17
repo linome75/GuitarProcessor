@@ -1,18 +1,15 @@
 package com.example.guitarprocessingapp;
 
-import android.Manifest;
-import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.guitarprocessingapp.ui.connection.DeviceSearchActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -59,5 +56,18 @@ public class MainActivity extends AppCompatActivity {
         }
         getMenuInflater().inflate(R.menu.connection_menu, menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+
+        if (itemId == R.id.action_search_devices) {
+            Intent intent = new Intent(this, DeviceSearchActivity.class);
+            startActivity(intent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
