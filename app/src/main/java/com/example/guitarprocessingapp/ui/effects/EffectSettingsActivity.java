@@ -6,7 +6,7 @@ import android.view.MenuItem;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.guitarprocessingapp.R;
@@ -21,7 +21,7 @@ public class EffectSettingsActivity extends AppCompatActivity {
 
     private ActivityEffectSettingsBinding binding;
     private EffectItem originalEffect;
-    private List<EffectParameter> parameterDraft; // Копия параметров
+    private List<EffectParameter> parameterDraft;
     private ParameterAdapter adapter;
     private int effectIndex;
 
@@ -31,18 +31,26 @@ public class EffectSettingsActivity extends AppCompatActivity {
         binding = ActivityEffectSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Настройка Toolbar как ActionBar
+        Toolbar toolbar = binding.toolbar;
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        // Получение и проверка индекса эффекта
         effectIndex = getIntent().getIntExtra(EXTRA_EFFECT_INDEX, -1);
         originalEffect = EffectsViewModel.getEffectByIndex(effectIndex);
 
         if (originalEffect == null) {
-            finish(); // Ошибка: индекс невалидный
+            finish(); // Недопустимый индекс — закрываем активность
             return;
         }
 
-        setTitle(originalEffect.getName());
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        // Установка названия эффекта как заголовка
+        getSupportActionBar().setTitle(originalEffect.getName());
 
-        // Создаем копию параметров, чтобы не менять оригинал сразу
+        // Создание копии параметров для редактирования
         parameterDraft = new ArrayList<>();
         for (EffectParameter param : originalEffect.getParameters()) {
             parameterDraft.add(new EffectParameter(
@@ -54,13 +62,10 @@ public class EffectSettingsActivity extends AppCompatActivity {
             ));
         }
 
+        // Настройка RecyclerView
         adapter = new ParameterAdapter(parameterDraft);
         binding.recyclerParams.setLayoutManager(new LinearLayoutManager(this));
         binding.recyclerParams.setAdapter(adapter);
-
-        // Добавляем разделители между элементами списка
-//        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
-//        binding.recyclerParams.addItemDecoration(divider);
     }
 
     @Override
@@ -72,10 +77,10 @@ public class EffectSettingsActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            finish(); // Назад — ничего не сохраняем
+            finish(); // Назад — выход без сохранения
             return true;
         } else if (item.getItemId() == R.id.action_save) {
-            // Сохраняем изменения в оригинальный EffectItem
+            // Сохраняем изменения и выходим
             originalEffect.setParameters(parameterDraft);
             finish();
             return true;
