@@ -5,12 +5,14 @@ import java.util.List;
 
 public class EffectItem {
     private String name;
-    private boolean enabled;
+    private boolean enabled;   // включен или выключен эффект
+    private boolean selected;  // выбран в UI
     private List<EffectParameter> parameters;
 
     public EffectItem(String name, boolean enabled) {
         this.name = name;
         this.enabled = enabled;
+        this.selected = false;
         this.parameters = new ArrayList<>();
     }
 
@@ -18,12 +20,20 @@ public class EffectItem {
         return name;
     }
 
-    public boolean isSelected() {
+    public boolean isEnabled() {
         return enabled;
     }
 
-    public void setSelected(boolean enabled) {
+    public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 
     public List<EffectParameter> getParameters() {

@@ -1,110 +1,145 @@
 package com.example.guitarprocessingapp.ui.effects;
 
+import android.content.Context;
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.guitarprocessingapp.R;
+import com.example.guitarprocessingapp.bluetooth.BluetoothController;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class EffectsViewModel extends ViewModel {
 
     private final MutableLiveData<List<EffectItem>> effects = new MutableLiveData<>();
-    private int selectedPosition = -1; // Нет выбранного эффекта по умолчанию
-
-    // Статическая ссылка на инстанс для доступа из Activity (можно заменить на более чистую архитектуру)
+    private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
+    private int selectedPosition = -1;
     private static EffectsViewModel instance;
+
+    private final BluetoothController controller = BluetoothController.getInstance();
 
     public EffectsViewModel() {
         instance = this;
-        loadEffects();
     }
 
-    private void loadEffects() {
-        // Инициализация списка эффектов с параметрами (заглушка, потом можно получить по Bluetooth)
-        List<EffectItem> list = new ArrayList<>();
+    public void loadEffects() {
+        if (controller.getConnectedDevice() == null) {
+            errorMessage.postValue(getStringResource(R.string.error_device_not_connected));
+            effects.postValue(new ArrayList<>());
+            return;
+        }
 
-        EffectItem overdrive = new EffectItem("Overdrive", false);
-        overdrive.setParameters(Arrays.asList(
-                new EffectParameter("Gain", 0, 100, 50, "%"),
-                new EffectParameter("Tone", 0, 10, 5),
-                new EffectParameter("Level", 0, 100, 75)
-        ));
+        controller.validateGuitarProcessor(isValid -> {
+            if (isValid) {
+                requestEffectsFromDevice();
+            } else {
+                errorMessage.postValue(getStringResource(R.string.error_not_guitar_processor));
+                effects.postValue(new ArrayList<>());
+            }
+        });
+    }
 
-        EffectItem distortion = new EffectItem("Distortion", false);
-        distortion.setParameters(Arrays.asList(
-                new EffectParameter("Drive", 0, 100, 60),
-                new EffectParameter("Tone", 0, 10, 7),
-                new EffectParameter("Level", 0, 100, 80)
-        ));
+    private void requestEffectsFromDevice() {
+        String cmdGetEffects = getStringResource(R.string.cmd_get_effects);
+        controller.sendCommand(cmdGetEffects, response -> {
+            if (response == null || response.isEmpty()) {
+                errorMessage.postValue(getStringResource(R.string.error_failed_to_get_effects));
+                effects.postValue(new ArrayList<>());
+                return;
+            }
 
-        EffectItem chorus = new EffectItem("Chorus", false);
-        chorus.setParameters(Arrays.asList(
-                new EffectParameter("Depth", 0, 100, 40),
-                new EffectParameter("Rate", 0, 10, 5),
-                new EffectParameter("Mix", 0, 100, 60)
-        ));
+            List<EffectItem> parsedEffects = parseEffectsJson(response);
+            if (parsedEffects.isEmpty()) {
+                errorMessage.postValue(getStringResource(R.string.error_empty_or_unrecognized_effects));
+            }
+            effects.postValue(parsedEffects);
+        });
+    }
 
-        EffectItem delay = new EffectItem("Delay", false);
-        delay.setParameters(Arrays.asList(
-                new EffectParameter("Time", 0, 1000, 300),
-                new EffectParameter("Feedback", 0, 100, 50),
-                new EffectParameter("Mix", 0, 100, 70)
-        ));
-
-        EffectItem reverb = new EffectItem("Reverb", false);
-        reverb.setParameters(Arrays.asList(
-                new EffectParameter("Room Size", 0, 100, 80),
-                new EffectParameter("Damping", 0, 100, 50),
-                new EffectParameter("Mix", 0, 100, 60)
-        ));
-
-        list.add(overdrive);
-        list.add(distortion);
-        list.add(chorus);
-        list.add(delay);
-        list.add(reverb);
-
-        effects.setValue(list);
+    private String getStringResource(int resId) {
+        Context context = controller.getAppContext();
+        if (context == null) return "";
+        return context.getString(resId);
     }
 
     public LiveData<List<EffectItem>> getEffects() {
         return effects;
     }
 
-    public void selectEffect(int position) {
-        if (effects.getValue() == null) return;
+    public LiveData<String> getErrorMessage() {
+        return errorMessage;
+    }
 
-        List<EffectItem> list = new ArrayList<>(effects.getValue());
+    public void selectEffect(int position) {
+        List<EffectItem> current = effects.getValue();
+        if (current == null || position < 0 || position >= current.size()) return;
+
+        List<EffectItem> updated = new ArrayList<>(current);
 
         if (selectedPosition == position) {
-            // Повторное нажатие — сбрасываем выбор
-            list.get(position).setSelected(false);
+            EffectItem effect = updated.get(position);
+            effect.setSelected(false);
+            sendEffectCommand(effect.getName(), false);
             selectedPosition = -1;
         } else {
-            // Сбросить прошлый выбор, если был
-            if (selectedPosition != -1 && selectedPosition < list.size()) {
-                list.get(selectedPosition).setSelected(false);
+            if (selectedPosition >= 0 && selectedPosition < updated.size()) {
+                EffectItem prevEffect = updated.get(selectedPosition);
+                prevEffect.setSelected(false);
+                sendEffectCommand(prevEffect.getName(), false);
             }
-            // Установить новый выбор
-            list.get(position).setSelected(true);
+
+            EffectItem newEffect = updated.get(position);
+            newEffect.setSelected(true);
+            sendEffectCommand(newEffect.getName(), true);
             selectedPosition = position;
         }
 
-        effects.setValue(list);
+        effects.setValue(updated);
     }
 
-    /**
-     * Получить эффект по индексу из текущего списка.
-     * Возвращает null, если индекс невалидный или список не загружен.
-     */
+    private void sendEffectCommand(String effectName, boolean enable) {
+        if (controller.getSocket() == null || !controller.getSocket().isConnected()) {
+            errorMessage.postValue(getStringResource(R.string.error_device_not_connected));
+            return;
+        }
+
+        controller.sendEffectCommand(effectName, enable, response -> {
+            if (response == null) {
+                String errMsg = String.format(getStringResource(R.string.error_send_command_failed), effectName);
+                errorMessage.postValue(errMsg);
+            }
+        });
+    }
+
+    private List<EffectItem> parseEffectsJson(String json) {
+        List<EffectItem> list = new ArrayList<>();
+        try {
+            JSONArray array = new JSONArray(json);
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject effectObj = array.getJSONObject(i);
+                String name = effectObj.optString("name", "Unknown");
+                boolean enabled = effectObj.optBoolean("enabled", false);
+                EffectItem effect = new EffectItem(name, enabled);
+                list.add(effect);
+            }
+        } catch (JSONException e) {
+            Log.e("EffectsViewModel", "Ошибка парсинга JSON эффектов", e);
+        }
+        return list;
+    }
+
     public static EffectItem getEffectByIndex(int index) {
         if (instance == null || instance.effects.getValue() == null) return null;
-
         List<EffectItem> list = instance.effects.getValue();
         if (index < 0 || index >= list.size()) return null;
-
         return list.get(index);
     }
 }

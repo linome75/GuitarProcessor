@@ -1,0 +1,14 @@
+<resources>
+    <string name="cmd_identify_device">IDENTIFY</string>
+    <string name="resp_valid_device">GUITAR_PROCESSOR</string>
+
+    <string name="cmd_get_effects">GET_EFFECTS</string>
+    <string name="cmd_enable_effect_prefix">ENABLE_EFFECT:</string>
+    <string name="cmd_disable_effect_prefix">DISABLE_EFFECT:</string>
+
+    <string name="error_device_not_connected">Гитарный процессор не подключен</string>
+    <string name="error_not_guitar_processor">Подключенное устройство не является гитарным процессором</string>
+    <string name="error_failed_to_get_effects">Не удалось получить список эффектов</string>
+    <string name="error_empty_or_unrecognized_effects">Список эффектов пуст или не распознан</string>
+    <string name="error_send_command_failed">Ошибка при отправке команды для эффекта: %1$s</string>
+</resources>

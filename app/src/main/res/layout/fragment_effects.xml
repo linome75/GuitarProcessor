@@ -8,7 +8,7 @@
         android:id="@+id/text_empty_effects"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Отсутствуют эффекты для настройки"
+        android:text="Гитарный процессор не подключен"
         android:gravity="center"
         android:visibility="gone"
         android:textSize="18sp"

@@ -37,7 +37,7 @@ public class ConnectionFragment extends Fragment {
     private final ActivityResultLauncher<Intent> bluetoothEnableLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == Activity.RESULT_OK) {
-                    viewModel.loadPairedDevices(requireContext());
+                    loadDevices();
                 } else {
                     Toast.makeText(requireContext(), "Bluetooth отключён", Toast.LENGTH_SHORT).show();
                     requireActivity().finish();
@@ -84,6 +84,7 @@ public class ConnectionFragment extends Fragment {
 
         viewModel.getSelectedDeviceAddress().observe(getViewLifecycleOwner(), adapter::setSelectedAddress);
 
+        // Подписка на сообщения от ViewModel (через Toast)
         viewModel.getConnectionMessage().observe(getViewLifecycleOwner(), message -> {
             if (message != null && !message.isEmpty()) {
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
@@ -127,14 +128,17 @@ public class ConnectionFragment extends Fragment {
             Intent enableBtIntent = new Intent(android.bluetooth.BluetoothAdapter.ACTION_REQUEST_ENABLE);
             bluetoothEnableLauncher.launch(enableBtIntent);
         } else {
-            viewModel.startListeningPairedDevices(requireContext());
+            loadDevices();
         }
+    }
+
+    private void loadDevices() {
+        viewModel.loadPairedDevices(requireContext());
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        viewModel.stopListeningPairedDevices(requireContext());
         binding = null;
     }
 }
