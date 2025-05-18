@@ -2,7 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:title="@string/title_effects"
-        android:icon="@drawable/ic_update"
+    <item
+        android:id="@+id/action_reload"
+        android:title="@string/title_effects"
+        android:icon="@android:drawable/ic_menu_rotate"
         app:showAsAction="ifRoom"/>
 </menu>

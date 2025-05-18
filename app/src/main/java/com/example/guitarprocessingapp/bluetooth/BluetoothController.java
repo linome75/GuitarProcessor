@@ -13,6 +13,11 @@ import androidx.annotation.RequiresPermission;
 import androidx.core.content.ContextCompat;
 
 import com.example.guitarprocessingapp.R;
+import com.example.guitarprocessingapp.ui.effects.EffectParameter;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -57,16 +62,16 @@ public class BluetoothController {
 
     public boolean hasBluetoothPermission(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
-                    == PackageManager.PERMISSION_GRANTED;
+            return ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) ==
+                    PackageManager.PERMISSION_GRANTED;
         }
         return true;
     }
 
     public boolean hasScanPermission(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
-                    == PackageManager.PERMISSION_GRANTED;
+            return ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN) ==
+                    PackageManager.PERMISSION_GRANTED;
         }
         return true;
     }
@@ -84,10 +89,12 @@ public class BluetoothController {
         if (!isBluetoothSupported() || !hasBluetoothPermission(context)) {
             return devices;
         }
+
         Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
         if (bondedDevices != null) {
             devices.addAll(bondedDevices);
         }
+
         return devices;
     }
 
@@ -101,10 +108,10 @@ public class BluetoothController {
                 tmp.connect();
                 socket = tmp;
                 connectedDevice = device;
-                Log.d(TAG, "Connected to device: " + device.getName() + " (" + device.getAddress() + ")");
+                Log.d(TAG, "Connected to device: " + device.getName());
                 callback.onConnected();
             } catch (IOException e) {
-                Log.e(TAG, "Connection error: " + e.getMessage());
+                Log.e(TAG, "Connection failed: " + e.getMessage());
                 callback.onConnectionFailed(e);
             }
         }).start();
@@ -134,18 +141,6 @@ public class BluetoothController {
         return socket;
     }
 
-    public interface ConnectionCallback {
-        void onConnected();
-        void onConnectionFailed(Exception e);
-    }
-
-    public interface DeviceValidationCallback {
-        void onValidationResult(boolean isGuitarProcessor);
-    }
-
-    /**
-     * Проверяет, является ли подключенное устройство гитарным процессором.
-     */
     public void validateGuitarProcessor(DeviceValidationCallback callback) {
         new Thread(() -> {
             if (socket == null || !socket.isConnected()) {
@@ -153,16 +148,16 @@ public class BluetoothController {
                 return;
             }
 
+            if (appContext == null) {
+                Log.e(TAG, "App context not initialized");
+                callback.onValidationResult(false);
+                return;
+            }
+
+            String command = appContext.getString(R.string.cmd_identify_device);
+            String expected = appContext.getString(R.string.resp_valid_device);
+
             try {
-                if (appContext == null) {
-                    Log.e(TAG, "Context not initialized! Call initialize(context) first.");
-                    callback.onValidationResult(false);
-                    return;
-                }
-
-                String command = appContext.getString(R.string.cmd_identify_device);
-                String expectedResponse = appContext.getString(R.string.resp_valid_device);
-
                 OutputStream out = socket.getOutputStream();
                 InputStream in = socket.getInputStream();
 
@@ -172,8 +167,7 @@ public class BluetoothController {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                 String response = reader.readLine();
 
-                boolean isValid = expectedResponse.equals(response);
-                callback.onValidationResult(isValid);
+                callback.onValidationResult(expected.equals(response));
 
             } catch (IOException e) {
                 Log.e(TAG, "Validation error: " + e.getMessage());
@@ -182,13 +176,6 @@ public class BluetoothController {
         }).start();
     }
 
-    public interface ResponseCallback {
-        void onResponse(String response);
-    }
-
-    /**
-     * Универсальный метод отправки команды и получения ответа.
-     */
     public void sendCommand(String command, ResponseCallback callback) {
         new Thread(() -> {
             if (socket == null || !socket.isConnected()) {
@@ -209,15 +196,12 @@ public class BluetoothController {
                 callback.onResponse(response);
 
             } catch (IOException e) {
-                Log.e(TAG, "Send command error: " + e.getMessage());
+                Log.e(TAG, "Command send error: " + e.getMessage());
                 callback.onResponse(null);
             }
         }).start();
     }
 
-    /**
-     * Метод отправки команды включения/выключения эффекта.
-     */
     public void sendEffectCommand(String effectName, boolean enable, ResponseCallback callback) {
         if (appContext == null) {
             callback.onResponse(null);
@@ -230,5 +214,76 @@ public class BluetoothController {
         String command = prefix + effectName;
 
         sendCommand(command, callback);
+    }
+
+    public void sendUpdateEffectParamsCommand(String effectName, List<EffectParameter> parameters, ResponseCallback callback) {
+        if (socket == null || !socket.isConnected()) {
+            callback.onResponse(null);
+            return;
+        }
+
+        try {
+            JSONArray paramArray = new JSONArray();
+
+            for (EffectParameter param : parameters) {
+                JSONObject obj = new JSONObject();
+                obj.put("name", param.getName());
+                obj.put("value", param.getCurrentValue());
+                paramArray.put(obj);
+            }
+
+            String prefix = appContext.getString(R.string.cmd_update_params_prefix);
+            String command = prefix + effectName + "|" + paramArray.toString();
+
+            sendCommand(command, callback);
+
+        } catch (JSONException e) {
+            Log.e(TAG, "JSON build error for effect params", e);
+            callback.onResponse(null);
+        }
+    }
+
+    public void sendEffectParamsIndividually(String effectName, List<EffectParameter> parameters, ResponseCallback callback) {
+        if (socket == null || !socket.isConnected()) {
+            callback.onResponse(null);
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                OutputStream out = socket.getOutputStream();
+                InputStream in = socket.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                String lastResponse = null;
+
+                String paramPrefix = appContext.getString(R.string.cmd_set_param_prefix);
+
+                for (EffectParameter param : parameters) {
+                    String paramCommand = paramPrefix + effectName + "|" + param.getName() + "=" + param.getCurrentValue();
+                    out.write((paramCommand + "\n").getBytes());
+                    out.flush();
+                    lastResponse = reader.readLine();
+                }
+
+                callback.onResponse(lastResponse);
+
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to send parameters individually: " + e.getMessage());
+                callback.onResponse(null);
+            }
+        }).start();
+    }
+
+    public interface ConnectionCallback {
+        void onConnected();
+        void onConnectionFailed(Exception e);
+    }
+
+    public interface DeviceValidationCallback {
+        void onValidationResult(boolean isGuitarProcessor);
+    }
+
+    public interface ResponseCallback {
+        void onResponse(String response);
     }
 }

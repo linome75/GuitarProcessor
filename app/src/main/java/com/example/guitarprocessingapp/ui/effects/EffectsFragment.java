@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -34,6 +37,12 @@ public class EffectsFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentEffectsBinding.inflate(inflater, container, false);
         return binding.getRoot();
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true); // Включаем меню в фрагменте
     }
 
     @Override
@@ -94,5 +103,26 @@ public class EffectsFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.action_reload) {
+            reloadEffectsList();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void reloadEffectsList() {
+        // Очистить список и ошибки
+        adapter.setEffects(null);
+        binding.recyclerEffects.setVisibility(View.GONE);
+        binding.textEmptyEffects.setVisibility(View.GONE);
+        binding.textEmptyEffects.setText("");
+
+        // Загрузить эффекты заново
+        viewModel.loadEffects();
     }
 }

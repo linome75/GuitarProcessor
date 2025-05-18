@@ -6,9 +6,19 @@
     <string name="cmd_enable_effect_prefix">ENABLE_EFFECT:</string>
     <string name="cmd_disable_effect_prefix">DISABLE_EFFECT:</string>
 
+    <!-- Добавлены новые строки для команд, ранее захардкоженных -->
+    <string name="cmd_update_params_prefix">UPDATE_PARAMS:</string>
+    <string name="cmd_set_param_prefix">SET_PARAM:</string>
+
     <string name="error_device_not_connected">Гитарный процессор не подключен</string>
     <string name="error_not_guitar_processor">Подключенное устройство не является гитарным процессором</string>
     <string name="error_failed_to_get_effects">Не удалось получить список эффектов</string>
     <string name="error_empty_or_unrecognized_effects">Список эффектов пуст или не распознан</string>
     <string name="error_send_command_failed">Ошибка при отправке команды для эффекта: %1$s</string>
+
+    <string name="error_failed_to_get_params">Не удалось получить параметры</string>
+    <string name="error_parsing_params">Ошибка при разборе параметров</string>
+
+    <string name="error_updating_params">Не удалось обновить параметры</string>
+    <string name="params_updated_successfully">Параметры успешно обновлены</string>
 </resources>
